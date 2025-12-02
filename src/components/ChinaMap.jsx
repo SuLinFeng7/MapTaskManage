@@ -185,127 +185,104 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
       ],
     };
 
+    // 处理地图数据的通用函数
+    const processMapData = (geoJson) => {
+      // 处理地图数据，修改地区名称
+      if (geoJson.features) {
+        geoJson.features.forEach((feature) => {
+          const originalName = feature.properties.name;
+          // 修改名称映射
+          if (provinceNameMap[originalName]) {
+            // 保留原始名称用于数据匹配，但显示时使用简称
+            feature.properties.originalName = originalName;
+          }
+        });
+      }
+      echarts.registerMap("china", geoJson);
+      chartInstance.current.setOption(option);
+
+      // 地图加载完成后，应用初始状态
+      setTimeout(() => {
+        chartInstance.current.setOption({
+          series: [
+            {
+              zoom: initialViewState.zoom,
+              center: initialViewState.center,
+            },
+          ],
+        });
+        setupMapEventListeners();
+      }, 200);
+
+      // 地图加载后，为所有省份设置颜色
+      setTimeout(() => {
+        const allProvinces = Object.keys(provinceNameMap);
+        const allProvinceData = allProvinces.map((province) => ({
+          name: province,
+          value: provinceData[province]?.length || 0,
+          itemStyle: {
+            areaColor: calculateProvinceColor(province),
+          },
+        }));
+        chartInstance.current.setOption({
+          series: [
+            {
+              data: allProvinceData,
+            },
+          ],
+        });
+      }, 100);
+    };
+
     // 加载中国地图数据并处理名称映射
     const loadMapData = async () => {
       try {
-        // 优先尝试从阿里云数据可视化平台加载地图数据
-        const response = await fetch(
-          "https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json"
-        );
+        // 优先从本地文件加载地图数据
+        const response = await fetch("/data/china.json");
         if (response.ok) {
           const geoJson = await response.json();
-          // 处理地图数据，修改地区名称
-          if (geoJson.features) {
-            geoJson.features.forEach((feature) => {
-              const originalName = feature.properties.name;
-              // 修改名称映射
-              if (provinceNameMap[originalName]) {
-                // 保留原始名称用于数据匹配，但显示时使用简称
-                feature.properties.originalName = originalName;
-              }
-            });
-          }
-          echarts.registerMap("china", geoJson);
-          chartInstance.current.setOption(option);
-
-          // 地图加载完成后，应用初始状态
-          setTimeout(() => {
-            chartInstance.current.setOption({
-              series: [
-                {
-                  zoom: initialViewState.zoom,
-                  center: initialViewState.center,
-                },
-              ],
-            });
-            setupMapEventListeners();
-          }, 200);
-
-          // 地图加载后，为所有省份设置颜色
-          setTimeout(() => {
-            const allProvinces = Object.keys(provinceNameMap);
-            const allProvinceData = allProvinces.map((province) => ({
-              name: province,
-              value: provinceData[province]?.length || 0,
-              itemStyle: {
-                areaColor: calculateProvinceColor(province),
-              },
-            }));
-            chartInstance.current.setOption({
-              series: [
-                {
-                  data: allProvinceData,
-                },
-              ],
-            });
-          }, 100);
+          processMapData(geoJson);
         } else {
-          throw new Error("Failed to load map data");
+          throw new Error("本地地图数据加载失败");
         }
       } catch (error) {
-        console.error("加载地图数据失败，尝试备用方案:", error);
-        // 备用方案：使用其他CDN
+        console.error("从本地加载地图数据失败，尝试在线数据源:", error);
+        // 备用方案1：尝试从阿里云数据可视化平台加载
         try {
           const response = await fetch(
-            "https://raw.githubusercontent.com/apache/echarts/master/map/json/china.json"
+            "https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json"
           );
           if (response.ok) {
             const geoJson = await response.json();
-            // 处理地图数据
-            if (geoJson.features) {
-              geoJson.features.forEach((feature) => {
-                const originalName = feature.properties.name;
-                if (provinceNameMap[originalName]) {
-                  feature.properties.originalName = originalName;
-                }
-              });
-            }
-            echarts.registerMap("china", geoJson);
-            chartInstance.current.setOption(option);
-
-            // 地图加载完成后，应用初始状态
-            setTimeout(() => {
-              chartInstance.current.setOption({
-                series: [
-                  {
-                    zoom: initialViewState.zoom,
-                    center: initialViewState.center,
-                  },
-                ],
-              });
-              setupMapEventListeners();
-            }, 200);
-
-            // 地图加载后，为所有省份设置颜色
-            setTimeout(() => {
-              const allProvinces = Object.keys(provinceNameMap);
-              const allProvinceData = allProvinces.map((province) => ({
-                name: province,
-                value: provinceData[province]?.length || 0,
-                itemStyle: {
-                  areaColor: calculateProvinceColor(province),
-                },
-              }));
-              chartInstance.current.setOption({
-                series: [
-                  {
-                    data: allProvinceData,
-                  },
-                ],
-              });
-            }, 100);
+            processMapData(geoJson);
+          } else {
+            throw new Error("阿里云数据源加载失败");
           }
-        } catch (err) {
-          console.error("所有地图数据源加载失败:", err);
-          // 显示错误提示
-          chartInstance.current.setOption({
-            title: {
-              text: "地图加载失败，请检查网络连接",
-              left: "center",
-              top: "middle",
-              textStyle: { color: "#999" },
-            },
-          });
+        } catch (err1) {
+          console.error("阿里云数据源加载失败，尝试GitHub数据源:", err1);
+          // 备用方案2：使用GitHub数据源
+          try {
+            const response = await fetch(
+              "https://raw.githubusercontent.com/apache/echarts/master/map/json/china.json"
+            );
+            if (response.ok) {
+              const geoJson = await response.json();
+              processMapData(geoJson);
+            } else {
+              throw new Error("GitHub数据源加载失败");
+            }
+          } catch (err2) {
+            console.error("所有地图数据源加载失败:", err2);
+            // 显示错误提示
+            chartInstance.current.setOption({
+              title: {
+                text: "地图加载失败，请检查网络连接",
+                left: "center",
+                top: "middle",
+                textStyle: { color: "#999" },
+              },
+            });
+          }
         }
       }
     };
