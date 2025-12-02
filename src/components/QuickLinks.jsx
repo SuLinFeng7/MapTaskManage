@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Input, Button, Tag, Modal, Form, message } from "antd";
-import { PlusOutlined, CloseOutlined } from "@ant-design/icons";
+import { PlusOutlined, LinkOutlined } from "@ant-design/icons";
 import "./QuickLinks.css";
 
 const QuickLinks = () => {
@@ -32,9 +32,19 @@ const QuickLinks = () => {
     }
   };
 
-  const handleDeleteLink = (id) => {
-    setLinks((prev) => prev.filter((link) => link.id !== id));
-    message.success("删除成功");
+  const handleDeleteLink = (e, id, linkName) => {
+    e.stopPropagation(); // 阻止点击事件冒泡，避免触发链接跳转
+    Modal.confirm({
+      title: "确认删除",
+      content: `确定要删除快速链接"${linkName}"吗？`,
+      okText: "删除",
+      okType: "danger",
+      cancelText: "取消",
+      onOk: () => {
+        setLinks((prev) => prev.filter((link) => link.id !== id));
+        message.success("删除成功");
+      },
+    });
   };
 
   const handleLinkClick = (url) => {
@@ -64,15 +74,21 @@ const QuickLinks = () => {
           <div className="empty-links">点击"添加"按钮添加快速链接</div>
         ) : (
           links.map((link) => (
-            <Tag
+            <div
               key={link.id}
-              className="quick-link-tag"
-              closable
-              onClose={() => handleDeleteLink(link.id)}
+              className="quick-link-item"
               onClick={() => handleLinkClick(link.url)}
             >
-              {link.name}
-            </Tag>
+              <LinkOutlined className="link-icon" />
+              <span className="link-name">{link.name}</span>
+              <button
+                className="link-delete-btn"
+                onClick={(e) => handleDeleteLink(e, link.id, link.name)}
+                title="删除"
+              >
+                ×
+              </button>
+            </div>
           ))
         )}
       </div>
