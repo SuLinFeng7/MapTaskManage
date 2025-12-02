@@ -1,0 +1,106 @@
+.task-list-modal .ant-modal-body {
+  padding: 20px;
+}
+
+.task-list-content {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.empty-tasks {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.task-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.task-list-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.task-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.task-item-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.task-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-province {
+  color: #667eea;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-待开始 {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-进行中 {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-已完成 {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-已延期 {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.task-item-field {
+  margin-bottom: 8px;
+}
+
+.task-item-field:last-child {
+  margin-bottom: 0;
+}
+
+.task-item-field strong {
+  color: #666;
+  font-size: 14px;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.task-item-field p {
+  margin: 4px 0 0 0;
+  color: #333;
+  line-height: 1.6;
+}
+
+.task-item-field span {
+  color: #333;
+}
+

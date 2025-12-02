@@ -1,0 +1,47 @@
+.quick-links {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.quick-links-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.quick-links-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.quick-links-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.empty-links {
+  color: #999;
+  font-size: 14px;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.quick-link-tag {
+  cursor: pointer;
+  padding: 4px 12px;
+  font-size: 14px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+
+.quick-link-tag:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
