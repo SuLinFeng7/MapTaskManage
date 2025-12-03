@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import ChinaMap from "./components/ChinaMap";
-import ProvinceTasks from "./components/ProvinceTasks";
-import TaskList from "./components/TaskList";
-import QuickLinks from "./components/QuickLinks";
+import ChinaMap from "./components/ChinaMap/ChinaMap";
+import ProvinceTasks from "./components/ProvinceTasks/ProvinceTasks";
+import TaskList from "./components/TaskList/TaskList";
+import QuickLinks from "./components/QuickLinks/QuickLinks";
 import "./App.css";
 
 function App() {

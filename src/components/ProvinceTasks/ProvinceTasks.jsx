@@ -298,3 +298,4 @@ const ProvinceTasks = ({ provinceName, tasks, onSave, onClose }) => {
 };
 
 export default ProvinceTasks;
+
