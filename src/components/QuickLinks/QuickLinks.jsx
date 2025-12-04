@@ -139,12 +139,8 @@ const QuickLinks = () => {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
-    if (!isLongPressRef.current && currentEditingIdRef.current) {
-      const link = links.find((l) => l.id === currentEditingIdRef.current);
-      if (link && !colorPickerVisible) {
-        handleLinkClick(link.url);
-      }
-    }
+    // 移除这里的 handleLinkClick 调用，避免与 onClick 重复触发
+    // 点击事件由 onClick 统一处理
     isLongPressRef.current = false;
     currentEditingIdRef.current = null;
   };
