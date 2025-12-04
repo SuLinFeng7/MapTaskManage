@@ -8,6 +8,7 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
   const prevProvinceDataRef = useRef(null);
   const mapDataLoadedRef = useRef(false); // 标记地图数据是否已加载
   const updateTimerRef = useRef(null); // 保存更新定时器引用
+  const mapProvinceNamesRef = useRef([]); // 存储地图中的实际省份名称（可能是简称）
 
   // 省份名称映射（全称到简称）
   const provinceNameMap = {
@@ -47,6 +48,12 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
     台湾省: "台湾",
   };
 
+  // 反向映射（简称到全称），用于匹配新地图数据
+  const shortToFullNameMap = {};
+  Object.keys(provinceNameMap).forEach((fullName) => {
+    shortToFullNameMap[provinceNameMap[fullName]] = fullName;
+  });
+
   // 需要隐藏标签的地区
   const hiddenLabels = ["北京市", "上海市", "香港特别行政区", "澳门特别行政区"];
 
@@ -58,7 +65,10 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
 
   // 计算省份颜色（根据最近的发版时间）
   const calculateProvinceColor = (provinceName) => {
-    const tasks = provinceData[provinceName] || [];
+    // 尝试通过反向映射找到全称，如果找不到则使用原名称
+    const fullName = shortToFullNameMap[provinceName] || provinceName;
+    // 优先使用全称匹配 provinceData，如果找不到则使用原名称
+    const tasks = provinceData[fullName] || provinceData[provinceName] || [];
     if (tasks.length === 0) {
       return "#e0f3ff"; // 默认浅蓝色
     }
@@ -172,7 +182,10 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
     chartInstance.current.off("click");
     chartInstance.current.on("click", (params) => {
       if (params.componentType === "series") {
-        onProvinceClick(params.name);
+        // 地图中的名称可能是简称，需要转换为全称
+        const mapName = params.name;
+        const fullName = shortToFullNameMap[mapName] || mapName;
+        onProvinceClick(fullName);
       }
     });
   };
@@ -190,23 +203,19 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
     if (mapDataLoadedRef.current) return;
 
     // 准备地图数据 - 包含所有有任务的省份
-    const mapData = Object.keys(provinceData)
-      .filter((province) => provinceData[province]?.length > 0)
-      .map((province) => ({
-        name: province,
-        value: provinceData[province].length,
-        itemStyle: {
-          areaColor: calculateProvinceColor(province),
-        },
-      }));
+    // 注意：这里先准备一个空数组，实际的地图数据会在 processMapData 中根据地图中的实际名称来设置
+    const mapData = [];
 
     const option = {
       tooltip: {
         trigger: "item",
         formatter: function (params) {
-          const provinceName = params.name;
-          const displayName = provinceNameMap[provinceName] || provinceName;
-          const tasks = provinceData[provinceName];
+          const mapName = params.name; // 地图中的名称（可能是简称）
+          const displayName = provinceNameMap[mapName] || mapName; // 显示名称
+          // 尝试通过反向映射找到全称，如果找不到则使用地图中的名称
+          const fullName = shortToFullNameMap[mapName] || mapName;
+          // 优先使用全称匹配 provinceData，如果找不到则使用地图中的名称
+          const tasks = provinceData[fullName] || provinceData[mapName];
           const taskCount = tasks?.length || 0;
           if (taskCount > 0) {
             return `${displayName}<br/>任务数: ${taskCount}`;
@@ -247,9 +256,14 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
 
     // 处理地图数据的通用函数
     const processMapData = (geoJson) => {
-      // 处理地图数据，修改地区名称
+      // 提取地图中的实际省份名称
+      const mapNames = [];
       if (geoJson.features) {
         geoJson.features.forEach((feature) => {
+          const mapName = feature.properties.name;
+          if (mapName) {
+            mapNames.push(mapName);
+          }
           const originalName = feature.properties.name;
           // 修改名称映射
           if (provinceNameMap[originalName]) {
@@ -258,6 +272,7 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
           }
         });
       }
+      mapProvinceNamesRef.current = mapNames; // 保存地图中的省份名称
       echarts.registerMap("china", geoJson);
       mapDataLoadedRef.current = true; // 标记地图数据已加载
 
@@ -279,14 +294,25 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
 
       // 地图加载后，为所有省份设置颜色
       setTimeout(() => {
-        const allProvinces = Object.keys(provinceNameMap);
-        const allProvinceData = allProvinces.map((province) => ({
-          name: province,
-          value: provinceData[province]?.length || 0,
-          itemStyle: {
-            areaColor: calculateProvinceColor(province),
-          },
-        }));
+        // 使用地图中的实际省份名称（可能是简称）
+        const mapNames =
+          mapProvinceNamesRef.current.length > 0
+            ? mapProvinceNamesRef.current
+            : Object.keys(provinceNameMap);
+
+        const allProvinceData = mapNames.map((mapName) => {
+          // 尝试通过反向映射找到全称，如果找不到则使用地图中的名称
+          const fullName = shortToFullNameMap[mapName] || mapName;
+          // 优先使用全称匹配 provinceData，如果找不到则使用地图中的名称
+          const tasks = provinceData[fullName] || provinceData[mapName];
+          return {
+            name: mapName, // 使用地图中的实际名称
+            value: tasks?.length || 0,
+            itemStyle: {
+              areaColor: calculateProvinceColor(fullName || mapName),
+            },
+          };
+        });
         chartInstance.current.setOption({
           series: [
             {
@@ -426,21 +452,32 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
           return;
         }
 
-        const allProvinces = Object.keys(provinceNameMap);
-        const allProvinceData = allProvinces.map((province) => {
+        // 使用地图中的实际省份名称（可能是简称）
+        const mapNames =
+          mapProvinceNamesRef.current.length > 0
+            ? mapProvinceNamesRef.current
+            : Object.keys(provinceNameMap);
+
+        const allProvinceData = mapNames.map((mapName) => {
           try {
+            // 尝试通过反向映射找到全称，如果找不到则使用地图中的名称
+            const fullName = shortToFullNameMap[mapName] || mapName;
+            // 优先使用全称匹配 provinceData，如果找不到则使用地图中的名称
+            const tasks = provinceData[fullName] || provinceData[mapName];
             return {
-              name: province,
-              value: provinceData[province]?.length || 0,
+              name: mapName, // 使用地图中的实际名称
+              value: tasks?.length || 0,
               itemStyle: {
-                areaColor: calculateProvinceColor(province),
+                areaColor: calculateProvinceColor(fullName || mapName),
               },
             };
           } catch (error) {
-            console.error(`计算省份 ${province} 颜色失败:`, error);
+            console.error(`计算省份 ${mapName} 颜色失败:`, error);
+            const fullName = shortToFullNameMap[mapName] || mapName;
+            const tasks = provinceData[fullName] || provinceData[mapName];
             return {
-              name: province,
-              value: provinceData[province]?.length || 0,
+              name: mapName,
+              value: tasks?.length || 0,
               itemStyle: {
                 areaColor: "#e0f3ff", // 默认颜色
               },

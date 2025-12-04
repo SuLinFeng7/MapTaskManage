@@ -37,6 +37,24 @@ function App() {
     });
   };
 
+  // 删除任务
+  const handleDeleteTask = (taskId, provinceName) => {
+    setProvinceData((prev) => {
+      const newData = { ...prev };
+      if (newData[provinceName]) {
+        const updatedTasks = newData[provinceName].filter(
+          (task) => task.id !== taskId
+        );
+        if (updatedTasks.length === 0) {
+          delete newData[provinceName];
+        } else {
+          newData[provinceName] = updatedTasks;
+        }
+      }
+      return newData;
+    });
+  };
+
   // 计算总任务数和即将发版的任务数
   const totalTasks = Object.values(provinceData).reduce(
     (sum, tasks) => sum + (tasks?.length || 0),
@@ -156,6 +174,7 @@ function App() {
         }}
         {...getTaskListData()}
         provinceData={provinceData}
+        onDeleteTask={handleDeleteTask}
       />
     </div>
   );

@@ -45,6 +45,19 @@
   gap: 12px;
 }
 
+.task-delete-btn {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.task-delete-btn:hover {
+  opacity: 1;
+}
+
+.task-list-item:hover .task-delete-btn {
+  opacity: 0.8;
+}
+
 .task-province {
   color: #667eea;
   font-weight: 500;
