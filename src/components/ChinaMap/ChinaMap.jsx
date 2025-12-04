@@ -52,7 +52,7 @@ const ChinaMap = ({ onProvinceClick, provinceData }) => {
 
   // 固定的初始缩放和位置配置
   const initialViewState = {
-    zoom: 1.5972000000000004, // 缩放比例
+    zoom: 1.2072000000000004, // 缩放比例
     center: [104.64832355210311, 36.06953268677697], // 中心点坐标 [longitude, latitude]
   };
 
